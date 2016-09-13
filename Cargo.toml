@@ -1,0 +1,7 @@
+[package]
+name = "bmp085"
+version = "0.1.0"
+authors = ["Claus Matzinger <claus.matzinger+kb@gmail.com>"]
+
+[dependencies]
+#i2cdev = "latest"
