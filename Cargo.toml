@@ -12,4 +12,4 @@ i2cdev = "0.3.1"
 
 [dev-dependencies]
 byteorder = "0.5.3"
-rand = "*"
+rand = "0.3.15"
