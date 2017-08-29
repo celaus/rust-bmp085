@@ -1,6 +1,6 @@
 [package]
 name = "bmp085"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Claus Matzinger <claus.matzinger+kb@gmail.com>"]
 description = "A Rust driver for the Adafruit BMP085/BMP180 thermometer/barometer device."
 repository = "https://github.com/celaus/rust-bmp085"
