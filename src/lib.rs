@@ -225,10 +225,10 @@ impl<T> BMP085BarometerThermometer<T>
                -> Result<BMP085BarometerThermometer<T>, T::Error> {
         let coeff = try!(BMP085SensorCoefficients::new(&mut dev));
         Ok(BMP085BarometerThermometer {
-            dev: dev,
-            coeff: coeff,
-            accuracy: accuracy,
-        })
+               dev: dev,
+               coeff: coeff,
+               accuracy: accuracy,
+           })
     }
 }
 
@@ -297,18 +297,18 @@ impl BMP085SensorCoefficients {
         let t_md = try!(dev.smbus_read_word_data(Register::Bmp085CalMd as u8));
 
         Ok(BMP085SensorCoefficients {
-            cal_ac1: i_to_be(t_ac1) as i16,
-            cal_ac2: i_to_be(t_ac2) as i16,
-            cal_ac3: i_to_be(t_ac3) as i16,
-            cal_ac4: u_to_be(t_ac4) as u16,
-            cal_ac5: u_to_be(t_ac5) as u16,
-            cal_ac6: u_to_be(t_ac6) as u16,
-            cal_b1: i_to_be(t_b1) as i16,
-            cal_b2: i_to_be(t_b2) as i16,
-            cal_mb: i_to_be(t_mb) as i16,
-            cal_mc: i_to_be(t_mc) as i16,
-            cal_md: i_to_be(t_md) as i16,
-        })
+               cal_ac1: i_to_be(t_ac1) as i16,
+               cal_ac2: i_to_be(t_ac2) as i16,
+               cal_ac3: i_to_be(t_ac3) as i16,
+               cal_ac4: u_to_be(t_ac4) as u16,
+               cal_ac5: u_to_be(t_ac5) as u16,
+               cal_ac6: u_to_be(t_ac6) as u16,
+               cal_b1: i_to_be(t_b1) as i16,
+               cal_b2: i_to_be(t_b2) as i16,
+               cal_mb: i_to_be(t_mb) as i16,
+               cal_mc: i_to_be(t_mc) as i16,
+               cal_md: i_to_be(t_md) as i16,
+           })
     }
 }
 
@@ -319,7 +319,8 @@ mod tests {
     extern crate byteorder;
     extern crate rand;
 
-    use super::{Command, Register, SamplingMode, BMP085SensorCoefficients, BMP085BarometerThermometer};
+    use super::{Command, Register, SamplingMode, BMP085SensorCoefficients,
+                BMP085BarometerThermometer};
     use i2cdev::sensors::{Thermometer, Barometer};
     use i2cdev::core::I2CDevice;
     use self::byteorder::{BigEndian, ByteOrder};

@@ -2,10 +2,11 @@
 name = "bmp085"
 version = "0.1.1"
 authors = ["Claus Matzinger <claus.matzinger+kb@gmail.com>"]
-description = "A Rust driver for the Adafruit BMP085 thermometer/barometer device."
+description = "A Rust driver for the Adafruit BMP085/BMP180 thermometer/barometer device."
 repository = "https://github.com/celaus/rust-bmp085"
-keywords = ["bmp085", "adafruit"]
+keywords = ["bmp085", "adafruit", "bmp180"]
 license = "Apache-2.0"
+readme = "README.md"
 
 [dependencies]
 i2cdev = "0.3.1"
