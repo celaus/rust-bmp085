@@ -12,17 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-extern crate i2cdev;
-
+pub use i2cdev;
 
 pub mod sensors;
 
+use crate::sensors::{Barometer, Thermometer};
+use i2cdev::core::*;
+use std::error::Error;
 use std::thread;
 use std::time::Duration;
-use std::error::Error;
-use i2cdev::core::*;
-use crate::sensors::{Thermometer, Barometer};
-
 
 // -------------------------------------------------------------------------------
 
@@ -49,11 +47,11 @@ enum Register {
     Bmp085CalAC4 = 0xB0, // R   Calibration data (16 bits)
     Bmp085CalAC5 = 0xB2, // R   Calibration data (16 bits)
     Bmp085CalAC6 = 0xB4, // R   Calibration data (16 bits)
-    Bmp085CalB1 = 0xB6, // R   Calibration data (16 bits)
-    Bmp085CalB2 = 0xB8, // R   Calibration data (16 bits)
-    Bmp085CalMb = 0xBA, // R   Calibration data (16 bits)
-    Bmp085CalMc = 0xBC, // R   Calibration data (16 bits)
-    Bmp085CalMd = 0xBE, // R   Calibration data (16 bits)
+    Bmp085CalB1 = 0xB6,  // R   Calibration data (16 bits)
+    Bmp085CalB2 = 0xB8,  // R   Calibration data (16 bits)
+    Bmp085CalMb = 0xBA,  // R   Calibration data (16 bits)
+    Bmp085CalMc = 0xBC,  // R   Calibration data (16 bits)
+    Bmp085CalMd = 0xBE,  // R   Calibration data (16 bits)
     Bmp085Control = 0xF4,
     Bmp085Data = 0xF6, // Pressure & Temp
 }
@@ -82,11 +80,14 @@ fn u_to_be(r: u16) -> u16 {
 ///
 /// Reads the raw temperature data...
 ///
-fn read_raw_temp<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
-                           coeff: &BMP085SensorCoefficients)
-                           -> Result<(i32, i32), E> {
-    dev.smbus_write_byte_data(Register::Bmp085Control as u8,
-                                   Command::Bmp085ReadTempCmd as u8)?;
+fn read_raw_temp<E: Error>(
+    dev: &mut dyn I2CDevice<Error = E>,
+    coeff: &BMP085SensorCoefficients,
+) -> Result<(i32, i32), E> {
+    dev.smbus_write_byte_data(
+        Register::Bmp085Control as u8,
+        Command::Bmp085ReadTempCmd as u8,
+    )?;
 
     thread::sleep(Duration::from_millis(5)); // sleep for 4.5 ms
 
@@ -95,7 +96,6 @@ fn read_raw_temp<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
     let ac5: i32 = coeff.cal_ac5 as i32;
     let md: i32 = coeff.cal_md as i32;
     let mc: i32 = coeff.cal_mc as i32;
-
 
     let _ac5 = ac5 as i64;
     let x1: i32 = ((ut - ac6) as i64 * _ac5 >> 15) as i32; // Note: X>>15 == X/(pow(2,15))
@@ -108,13 +108,16 @@ fn read_raw_temp<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
 ///
 /// Reads the raw pressure data...
 ///
-fn read_raw_pressure<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
-                               accuracy: &SamplingMode)
-                               -> Result<i32, E> {
+fn read_raw_pressure<E: Error>(
+    dev: &mut dyn I2CDevice<Error = E>,
+    accuracy: &SamplingMode,
+) -> Result<i32, E> {
     let pressure_cmd = Command::Bmp085ReadPressureCmd as u8;
     let sampling = accuracy.clone() as u8;
-    dev.smbus_write_byte_data(Register::Bmp085Control as u8,
-                                   pressure_cmd + (sampling << 6))?;
+    dev.smbus_write_byte_data(
+        Register::Bmp085Control as u8,
+        pressure_cmd + (sampling << 6),
+    )?;
 
     let duration = match *accuracy {
         SamplingMode::UltraLowPower => Duration::from_millis(5),
@@ -124,9 +127,11 @@ fn read_raw_pressure<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
     };
     thread::sleep(duration);
 
-    let data_registers = vec![Register::Bmp085Data as u8,
-                              Register::Bmp085Data as u8 + 1,
-                              Register::Bmp085Data as u8 + 2];
+    let data_registers = vec![
+        Register::Bmp085Data as u8,
+        Register::Bmp085Data as u8 + 1,
+        Register::Bmp085Data as u8 + 2,
+    ];
 
     // read bytes (u8) and cast directly to u32 for bitshifts
     let msb = dev.smbus_read_byte_data(data_registers[0])? as u32;
@@ -140,9 +145,10 @@ fn read_raw_pressure<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
 ///
 /// Read temperature from the provided device.
 ///
-fn read_temp<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
-                       coeff: &BMP085SensorCoefficients)
-                       -> Result<f32, E> {
+fn read_temp<E: Error>(
+    dev: &mut dyn I2CDevice<Error = E>,
+    coeff: &BMP085SensorCoefficients,
+) -> Result<f32, E> {
     let (t, _) = read_raw_temp(dev, coeff)?;
     Ok((t as f32) * 0.1)
 }
@@ -150,10 +156,11 @@ fn read_temp<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
 ///
 /// Read pressure from the provided device.
 ///
-fn read_pressure<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
-                           coeff: &BMP085SensorCoefficients,
-                           accuracy: &SamplingMode)
-                           -> Result<u32, E> {
+fn read_pressure<E: Error>(
+    dev: &mut dyn I2CDevice<Error = E>,
+    coeff: &BMP085SensorCoefficients,
+    accuracy: &SamplingMode,
+) -> Result<u32, E> {
     let (_, b5) = read_raw_temp(dev, coeff)?;
     let sampling = accuracy.clone() as u8;
 
@@ -165,7 +172,6 @@ fn read_pressure<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
     let ac2: i32 = coeff.cal_ac2 as i32;
     let ac3: i32 = coeff.cal_ac3 as i32;
     let ac4: u32 = coeff.cal_ac4 as u32;
-
 
     let b6: i32 = b5 - 4000i32;
 
@@ -194,7 +200,6 @@ fn read_pressure<E: Error>(dev: &mut dyn I2CDevice<Error = E>,
     Ok(((p) + ((x1 + x2 + 3791) >> 4)) as u32) // return as Pa
 }
 
-
 // -------------------------------------------------------------------------------
 
 ///
@@ -207,7 +212,8 @@ pub struct BMP085BarometerThermometer<T: I2CDevice + Sized> {
 }
 
 impl<T> BMP085BarometerThermometer<T>
-    where T: I2CDevice + Sized
+where
+    T: I2CDevice + Sized,
 {
     ///
     /// Calibrates and creates a sensor representation.
@@ -223,20 +229,22 @@ impl<T> BMP085BarometerThermometer<T>
     /// println!("Temperature: {:?} C", s.temperature_celsius().unwrap());
     /// println!("Pressure:    {:?} kPa", s.pressure_kpa().unwrap());
     /// ```
-    pub fn new(mut dev: T,
-               accuracy: SamplingMode)
-               -> Result<BMP085BarometerThermometer<T>, T::Error> {
+    pub fn new(
+        mut dev: T,
+        accuracy: SamplingMode,
+    ) -> Result<BMP085BarometerThermometer<T>, T::Error> {
         let coeff = BMP085SensorCoefficients::new(&mut dev)?;
         Ok(BMP085BarometerThermometer {
-               dev: dev,
-               coeff: coeff,
-               accuracy: accuracy,
-           })
+            dev: dev,
+            coeff: coeff,
+            accuracy: accuracy,
+        })
     }
 }
 
 impl<T> Barometer for BMP085BarometerThermometer<T>
-    where T: I2CDevice + Sized
+where
+    T: I2CDevice + Sized,
 {
     type Error = T::Error;
 
@@ -250,7 +258,8 @@ impl<T> Barometer for BMP085BarometerThermometer<T>
 }
 
 impl<T> Thermometer for BMP085BarometerThermometer<T>
-    where T: I2CDevice + Sized
+where
+    T: I2CDevice + Sized,
 {
     type Error = T::Error;
 
@@ -287,7 +296,9 @@ impl BMP085SensorCoefficients {
     ///
     /// Read calibration data from the provided device
     ///
-    pub fn new<E: Error>(dev: &mut dyn I2CDevice<Error = E>) -> Result<BMP085SensorCoefficients, E> {
+    pub fn new<E: Error>(
+        dev: &mut dyn I2CDevice<Error = E>,
+    ) -> Result<BMP085SensorCoefficients, E> {
         let t_ac1 = dev.smbus_read_word_data(Register::Bmp085CalAC1 as u8)?;
         let t_ac2 = dev.smbus_read_word_data(Register::Bmp085CalAC2 as u8)?;
         let t_ac3 = dev.smbus_read_word_data(Register::Bmp085CalAC3 as u8)?;
@@ -301,30 +312,30 @@ impl BMP085SensorCoefficients {
         let t_md = dev.smbus_read_word_data(Register::Bmp085CalMd as u8)?;
 
         Ok(BMP085SensorCoefficients {
-               cal_ac1: i_to_be(t_ac1) as i16,
-               cal_ac2: i_to_be(t_ac2) as i16,
-               cal_ac3: i_to_be(t_ac3) as i16,
-               cal_ac4: u_to_be(t_ac4) as u16,
-               cal_ac5: u_to_be(t_ac5) as u16,
-               cal_ac6: u_to_be(t_ac6) as u16,
-               cal_b1: i_to_be(t_b1) as i16,
-               cal_b2: i_to_be(t_b2) as i16,
-               cal_mb: i_to_be(t_mb) as i16,
-               cal_mc: i_to_be(t_mc) as i16,
-               cal_md: i_to_be(t_md) as i16,
-           })
+            cal_ac1: i_to_be(t_ac1) as i16,
+            cal_ac2: i_to_be(t_ac2) as i16,
+            cal_ac3: i_to_be(t_ac3) as i16,
+            cal_ac4: u_to_be(t_ac4) as u16,
+            cal_ac5: u_to_be(t_ac5) as u16,
+            cal_ac6: u_to_be(t_ac6) as u16,
+            cal_b1: i_to_be(t_b1) as i16,
+            cal_b2: i_to_be(t_b2) as i16,
+            cal_mb: i_to_be(t_mb) as i16,
+            cal_mc: i_to_be(t_mc) as i16,
+            cal_md: i_to_be(t_md) as i16,
+        })
     }
 }
-
 
 #[cfg(test)]
 mod tests {
 
-    use super::{Command, Register, SamplingMode, BMP085SensorCoefficients,
-                BMP085BarometerThermometer};
-    use crate::sensors::{Thermometer, Barometer};
-    use i2cdev::core::I2CDevice;
+    use super::{
+        BMP085BarometerThermometer, BMP085SensorCoefficients, Command, Register, SamplingMode,
+    };
+    use crate::sensors::{Barometer, Thermometer};
     use byteorder::{BigEndian, ByteOrder};
+    use i2cdev::core::I2CDevice;
     use rand::Rng;
     use std::io;
 
@@ -336,7 +347,6 @@ mod tests {
         p_data: u16,
         last_cmd: Command,
     }
-
 
     impl I2CDevice for MockBMP085 {
         type Error = io::Error;
@@ -416,29 +426,35 @@ mod tests {
             unimplemented!()
         }
 
-        fn smbus_write_block_data(&mut self,
-                                  _register: u8,
-                                  _values: &[u8])
-                                  -> Result<(), Self::Error> {
+        fn smbus_write_block_data(
+            &mut self,
+            _register: u8,
+            _values: &[u8],
+        ) -> Result<(), Self::Error> {
             unimplemented!()
         }
 
-        fn smbus_write_i2c_block_data(&mut self, _register: u8,
-                               _values: &[u8]) -> std::result::Result<(), <Self as i2cdev::core::I2CDevice>::Error> {
+        fn smbus_write_i2c_block_data(
+            &mut self,
+            _register: u8,
+            _values: &[u8],
+        ) -> std::result::Result<(), <Self as i2cdev::core::I2CDevice>::Error> {
             unimplemented!()
         }
 
-        fn smbus_process_block(&mut self,
-                               _register: u8,
-                               _values: &[u8])
-                               -> Result<Vec<u8>, Self::Error> {
+        fn smbus_process_block(
+            &mut self,
+            _register: u8,
+            _values: &[u8],
+        ) -> Result<Vec<u8>, Self::Error> {
             unimplemented!()
         }
 
-        fn smbus_read_i2c_block_data(&mut self,
-                                     _register: u8,
-                                     _len: u8)
-                                     -> Result<Vec<u8>, Self::Error> {
+        fn smbus_read_i2c_block_data(
+            &mut self,
+            _register: u8,
+            _len: u8,
+        ) -> Result<Vec<u8>, Self::Error> {
             unimplemented!()
         }
     }
@@ -516,7 +532,5 @@ mod tests {
             let mut dev = make_dev(i2cdev);
             let _ = dev.temperature_celsius().unwrap();
         }
-
     }
-
 }

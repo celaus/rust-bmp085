@@ -3,26 +3,21 @@
 [![Build Status](https://travis-ci.org/celaus/rust-bmp085.svg?branch=dev)](https://travis-ci.org/celaus/rust-bmp085)
 [![Crates.io](https://img.shields.io/crates/v/bmp085.svg)](https://crates.io/crates/bmp085)
 
-# Usage
+## Usage
 
 Add the bmp085 driver to your `Cargo.toml`. [`i2cdev`](https://github.com/rust-embedded/rust-i2cdev) is also required to use common interfaces:
 
-```
+```toml
 [dependencies]
-bmp085 = "0.1.1"
-i2cdev = "*"
+bmp085 = "0.2.1"
 ```
 
 Afterwards you can use the sensor:
 
 ```rust
-extern crate bmp085;
-extern crate i2cdev;
-
+use bmp085::i2cdev::linux::*;
+use bmp085::sensors::{Barometer, Thermometer};
 use bmp085::*;
-use i2cdev::linux::*;
-use i2cdev::sensors::{Barometer, Thermometer};
-
 
 use std::thread;
 use std::time::Duration;
@@ -44,13 +39,14 @@ fn main() {
 
 Use `cargo build` to build the program, run with `sudo target/debug/myprog`.
 
-*For device access, root access is commonly required.*
+_For device access, root access is commonly required._
 
-## Tests
+### Tests
 
 Run `cargo tests` on any compatible device/OS and you should see the following
 output:
-```
+
+```bash
 running 6 tests
 test tests::test_basic_temp_read ... ok
 test tests::test_max_temp_read ... ok
@@ -69,12 +65,12 @@ test BMP085BarometerThermometer<T>::new_0 ... ignored
 test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured
 ```
 
-# Resources
+## Resources
 
 [C++ implementation](http://svn.code.sf.net/p/bosch-ros-pkg/code/trunk/stacks/bosch_drivers/bmp085_driver/)
 
 [Data Sheet](https://cdn-shop.adafruit.com/datasheets/BMP085_DataSheet_Rev.1.0_01July2008.pdf)
 
-# License
+## License
 
 Licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0), (c) 2016 Claus Matzinger
