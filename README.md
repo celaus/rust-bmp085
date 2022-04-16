@@ -5,7 +5,7 @@
 
 ## Usage
 
-Add the bmp085 driver to your `Cargo.toml`. [`i2cdev`](https://github.com/rust-embedded/rust-i2cdev) is also required to use common interfaces:
+Add the bmp085 driver to your `Cargo.toml`.
 
 ```toml
 [dependencies]
