@@ -220,9 +220,10 @@ where
     ///
     /// # Examples
     /// ```rust,ignore
-    /// use i2cdev::linux::*;
+    /// use bmp085::i2cdev::linux::*;
+    /// use bmp085::sensors::{Barometer, Thermometer};
     /// use bmp085::*;
-    /// use i2cdev::sensors::{Barometer, Thermometer};
+    ///
     /// let i2c_dev = LinuxI2CDevice::new("/dev/i2c-1", BMP085_I2C_ADDR).unwrap();
     /// let mut s = BMP085BarometerThermometer::new(i2c_dev,
     ///                     SamplingMode::Standard).unwrap();
